@@ -1,36 +1,37 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
 import 'package:flutter/services.dart';
-import 'package:store_checker/store_checker.dart';
+import 'package:store_checker_plus/store_checker_plus.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String source = 'None';
+  String _source = 'Checking…';
+  String? _installer;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    _checkSource();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    Source installationSource;
+  Future<void> _checkSource() async {
+    Source source;
+    String? installer;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      //get origin of installed application
-      installationSource = await StoreChecker.getSource;
+      source = await StoreChecker.getSource;
+      installer = await StoreChecker.installerPackageName;
     } on PlatformException {
-      installationSource = Source.UNKNOWN;
+      source = Source.UNKNOWN;
     }
 
     // If the widget was removed from the tree while the asynchronous platform
@@ -38,70 +39,9 @@ class _MyAppState extends State<MyApp> {
     // setState to update our non-existent appearance.
     if (!mounted) return;
 
-    // Set source text state
     setState(() {
-      switch (installationSource) {
-        case Source.IS_INSTALLED_FROM_PLAY_STORE:
-          // Installed from Play Store
-          source = "Play Store";
-          break;
-        case Source.IS_INSTALLED_FROM_PLAY_PACKAGE_INSTALLER:
-          // Installed apk from Google Package installer/ firebase app tester
-          source = "Google Package installer";
-          break;
-        case Source.IS_INSTALLED_FROM_RU_STORE:
-          // Installed apk from RuStore
-          source = "RuStore";
-          break;
-        case Source.IS_INSTALLED_FROM_LOCAL_SOURCE:
-          // Installed using adb commands or side loading or any cloud service
-          source = "Local Source";
-          break;
-        case Source.IS_INSTALLED_FROM_AMAZON_APP_STORE:
-          // Installed from Amazon app store
-          source = "Amazon Store";
-          break;
-        case Source.IS_INSTALLED_FROM_HUAWEI_APP_GALLERY:
-          // Installed from Huawei app store
-          source = "Huawei App Gallery";
-          break;
-        case Source.IS_INSTALLED_FROM_SAMSUNG_GALAXY_STORE:
-          // Installed from Samsung app store
-          source = "Samsung Galaxy Store";
-          break;
-        case Source.IS_INSTALLED_FROM_SAMSUNG_SMART_SWITCH_MOBILE:
-          // Installed from Samsung Smart Switch Mobile
-          source = "Samsung Smart Switch Mobile";
-          break;
-        case Source.IS_INSTALLED_FROM_XIAOMI_GET_APPS:
-          // Installed from Xiaomi app store
-          source = "Xiaomi Get Apps";
-          break;
-        case Source.IS_INSTALLED_FROM_OPPO_APP_MARKET:
-          // Installed from Oppo app store
-          source = "Oppo App Market";
-          break;
-        case Source.IS_INSTALLED_FROM_VIVO_APP_STORE:
-          // Installed from Vivo app store
-          source = "Vivo App Store";
-          break;
-        case Source.IS_INSTALLED_FROM_OTHER_SOURCE:
-          // Installed from other market store
-          source = "Other Source";
-          break;
-        case Source.IS_INSTALLED_FROM_APP_STORE:
-          // Installed from iOS app store
-          source = "App Store";
-          break;
-        case Source.IS_INSTALLED_FROM_TEST_FLIGHT:
-          // Installed from Test Flight
-          source = "Test Flight";
-          break;
-        case Source.UNKNOWN:
-          // Installed from Unknown source
-          source = "Unknown Source";
-          break;
-      }
+      _source = describe(source);
+      _installer = installer;
     });
   }
 
@@ -109,13 +49,40 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
+        appBar: AppBar(title: const Text('store_checker_plus example')),
         body: Center(
-          child: Text('Installed from: $source\n'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text('Installed from: $_source'),
+              if (_installer != null) Text('Installer package: $_installer'),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// A readable name for [source].
+String describe(Source source) {
+  return switch (source) {
+    Source.IS_INSTALLED_FROM_PLAY_STORE => 'Play Store',
+    Source.IS_INSTALLED_FROM_PLAY_PACKAGE_INSTALLER => 'Package installer',
+    Source.IS_INSTALLED_FROM_RU_STORE => 'RuStore',
+    Source.IS_INSTALLED_FROM_LOCAL_SOURCE => 'Local source',
+    Source.IS_INSTALLED_FROM_AMAZON_APP_STORE => 'Amazon Appstore',
+    Source.IS_INSTALLED_FROM_HUAWEI_APP_GALLERY => 'Huawei AppGallery',
+    Source.IS_INSTALLED_FROM_SAMSUNG_GALAXY_STORE => 'Samsung Galaxy Store',
+    Source.IS_INSTALLED_FROM_SAMSUNG_SMART_SWITCH_MOBILE =>
+      'Samsung Smart Switch Mobile',
+    Source.IS_INSTALLED_FROM_OPPO_APP_MARKET => 'OPPO App Market',
+    Source.IS_INSTALLED_FROM_XIAOMI_GET_APPS => 'Xiaomi GetApps',
+    Source.IS_INSTALLED_FROM_VIVO_APP_STORE => 'vivo App Store',
+    Source.IS_INSTALLED_FROM_INDUS_APP_STORE => 'Indus Appstore',
+    Source.IS_INSTALLED_FROM_OTHER_SOURCE => 'Other source',
+    Source.IS_INSTALLED_FROM_APP_STORE => 'App Store',
+    Source.IS_INSTALLED_FROM_TEST_FLIGHT => 'TestFlight',
+    Source.UNKNOWN => 'Unknown source',
+  };
 }

@@ -1,6 +1,6 @@
-# store_checker_example
+# store_checker_plus_example
 
-Demonstrates how to use the store_checker plugin.
+Demonstrates how to use the store_checker_plus plugin.
 
 ## Getting Started
 
